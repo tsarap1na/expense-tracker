@@ -7,11 +7,11 @@ import { Transaction } from './transactions/models/transaction.model'
   imports: [
     SequelizeModule.forRoot({
       dialect: 'postgres',
-      host: 'localhost',
-      port: 5433,
-      username: 'user',
-      password: 'password',
-      database: 'expense_tracker',
+      host: process.env.PGHOST || 'localhost',
+      port: parseInt(process.env.PGPORT || '5433'),
+      username: process.env.PGUSER || 'user',
+      password: process.env.PGPASSWORD || 'password',
+      database: process.env.PGDATABASE || 'expense_tracker',
       autoLoadModels: true,
       sync: { alter: true },
       logging: false,
