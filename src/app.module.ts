@@ -8,7 +8,7 @@ import { Transaction } from './transactions/models/transaction.model'
     SequelizeModule.forRoot({
       dialect: 'postgres',
       host: 'localhost',
-      port: 5432,
+      port: 5433,
       username: 'user',
       password: 'password',
       database: 'expense_tracker',
