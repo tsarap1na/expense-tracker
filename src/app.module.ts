@@ -2,23 +2,33 @@ import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Category } from './categories/models/category.model'
 import { Transaction } from './transactions/models/transaction.model'
+import { CategoriesModule } from './categories/categories.module'
+import { TransactionsModule } from './transactions/transactions.module'
+import { SummaryModule } from './summary/summary.module'
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    SequelizeModule.forRoot({
-      dialect: 'postgres',
-      host: process.env.PGHOST || 'localhost',
-      port: parseInt(process.env.PGPORT || '5433'),
-      username: process.env.PGUSER || 'user',
-      password: process.env.PGPASSWORD || 'password',
-      database: process.env.PGDATABASE || 'expense_tracker',
-      autoLoadModels: true,
-      sync: { alter: true },
-      logging: false,
-      models: [Category, Transaction],
-    })
+    ConfigModule.forRoot({ isGlobal: true }),
+    SequelizeModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        dialect: 'postgres',
+        host: config.get('PGHOST'),
+        port: config.get('PGPORT'),
+        username: config.get('PGUSER'),
+        password: config.get('PGPASSWORD'),
+        database: config.get('PGDATABASE'),
+        autoLoadModels: true,
+        sync: { alter: true },
+        logging: false,
+        models: [Category, Transaction],
+      }),
+    }),
+    CategoriesModule,
+    TransactionsModule,
+    SummaryModule
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}

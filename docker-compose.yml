@@ -5,8 +5,8 @@ services:
     image: postgres:16-alpine
     container_name: expense_tracker_db
     environment:
-      POSTGRES_DB: expense_tracker
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ${PGDATABASE}
+      POSTGRES_USER: ${PGUSER}
+      POSTGRES_PASSWORD: ${PGPASSWORD}
     ports:
-      - '5433:5432'
+      - '${PGPORT}:5432'

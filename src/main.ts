@@ -24,6 +24,6 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
   console.log('App is running on http://localhost:3000');
-  console.log('Swagger on http://localhost:3000/api');
+  console.log('Swagger is running on http://localhost:3000/api');
 }
 bootstrap();
