@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsInt, Min, IsIn, IsEnum, IsDateString } from 'class-validator';
+import { IsOptional, IsInt, Min, Max, IsIn, IsEnum, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TransactionType } from '../models/transaction.model';
 
@@ -16,6 +16,7 @@ export class QueryTransactionDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(100)
   limit?: number = 20;
 
   @ApiPropertyOptional()
