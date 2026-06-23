@@ -1,7 +1,7 @@
 import {
     Column, DataType, Model, Table, 
     CreatedAt, UpdatedAt, BelongsTo,
-    AllowNull, ForeignKey
+    ForeignKey
 } from 'sequelize-typescript';
 import { Category } from '../../categories/models/category.model';
 
@@ -27,12 +27,12 @@ export class Transaction extends Model {
     declare category: Category;
 
     @Column({
-        type: DataType.DECIMAL(12, 2)
+        type: DataType.DECIMAL(12, 2), allowNull: false
     })
     declare amount: number;
 
     @Column({
-        type: DataType.ENUM(...Object.values(TransactionType))
+        type: DataType.ENUM(...Object.values(TransactionType)), allowNull: false
     })
     declare type: TransactionType;
 
@@ -44,7 +44,7 @@ export class Transaction extends Model {
     @Column({
         type: DataType.DATE
     })
-    declare date: string;
+    declare date: Date;
 
     @CreatedAt
     declare createdAt: Date;

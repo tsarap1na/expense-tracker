@@ -17,7 +17,7 @@ export class Category extends Model {
     declare name: string;
 
     @Column({
-        type: DataType.STRING(7)
+        type: DataType.STRING(7), allowNull: false
     })
     declare color: string;
 
