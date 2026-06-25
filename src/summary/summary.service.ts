@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, fn, col, literal } from 'sequelize';
-import { Transaction, TransactionType } from '../transactions/models/transaction.model';
+import { Transaction } from '../transactions/models/transaction.model';
+import { TransactionType } from '../common/enums';
 import { QuerySummaryDto } from './query-summary.dto';
 
 type SummaryRow = {

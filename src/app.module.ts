@@ -6,6 +6,7 @@ import { CategoriesModule } from './categories/categories.module'
 import { TransactionsModule } from './transactions/transactions.module'
 import { SummaryModule } from './summary/summary.module'
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RecurringModule } from './recurring/recurring.module';
 
 @Module({
   imports: [
@@ -28,7 +29,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     }),
     CategoriesModule,
     TransactionsModule,
-    SummaryModule
+    SummaryModule,
+    RecurringModule
   ],
 })
 export class AppModule {}

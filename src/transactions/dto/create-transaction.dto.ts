@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsPositive, IsEnum, IsOptional, IsString, IsDateString } from 'class-validator';
-import { TransactionType } from '../models/transaction.model';
+import { TransactionType } from '../../common/enums';
 
 export class CreateTransactionDto {
     @IsInt()

@@ -4,11 +4,7 @@ import {
     ForeignKey
 } from 'sequelize-typescript';
 import { Category } from '../../categories/models/category.model';
-
-export enum TransactionType {
-    expense = 'expense',
-    income = 'income',
-}
+import { TransactionType } from '../../common/enums';
 
 @Table({ tableName: 'transactions'})
 export class Transaction extends Model {
@@ -25,6 +21,10 @@ export class Transaction extends Model {
 
     @BelongsTo(() => Category)
     declare category: Category;
+
+    @ForeignKey(() => require('../../recurring/models/recurring.model').Recurring)
+    @Column({ type: DataType.INTEGER, allowNull: true })
+    declare recurringId: number | null;
 
     @Column({
         type: DataType.DECIMAL(12, 2), allowNull: false
