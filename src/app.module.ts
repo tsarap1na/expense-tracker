@@ -7,6 +7,7 @@ import { TransactionsModule } from '@transactions/transactions.module'
 import { SummaryModule } from '@summary/summary.module'
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RecurringModule } from '@recurring/recurring.module';
+import { Recurring } from '@recurring/models/recurring.model';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { RecurringModule } from '@recurring/recurring.module';
         autoLoadModels: true,
         sync: { alter: true },
         logging: false,
-        models: [Category, Transaction],
+        models: [Category, Transaction, Recurring],
       }),
     }),
     CategoriesModule,
