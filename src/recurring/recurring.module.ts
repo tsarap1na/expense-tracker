@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Recurring } from './models/recurring.model';
-import { Transaction } from '../transactions/models/transaction.model';
-import { Category } from '../categories/models/category.model';
+import { Transaction } from '@transactions/models/transaction.model';
+import { Category } from '@categories/models/category.model';
 import { RecurringController } from './recurring.controller';
 import { RecurringService } from './recurring.service';
 import { RecurringRepository } from './recurring.repository';

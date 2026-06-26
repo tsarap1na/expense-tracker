@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, WhereOptions } from 'sequelize';
-import { Transaction } from '../transactions/models/transaction.model';
-import { Category } from '../categories/models/category.model';
+import { Transaction } from '@transactions/models/transaction.model';
+import { Category } from '@categories/models/category.model';
 import { QueryTransactionDto } from './dto/query-transaction.dto';
 
 @Injectable()

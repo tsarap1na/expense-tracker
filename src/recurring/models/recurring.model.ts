@@ -1,6 +1,6 @@
 import { Column, DataType, Model, Table, ForeignKey, BelongsTo, CreatedAt, UpdatedAt } from 'sequelize-typescript';
-import { Category } from '../../categories/models/category.model';
-import { TransactionType } from '../../common/enums';
+import { Category } from '@categories/models/category.model';
+import { TransactionType } from '@common/enums';
 
 export enum Frequency {
     day = 'day',

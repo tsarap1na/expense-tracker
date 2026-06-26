@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { RecurringRepository } from './recurring.repository';
-import { Category } from '../categories/models/category.model';
-import { Transaction } from '../transactions/models/transaction.model';
+import { Category } from '@categories/models/category.model';
+import { Transaction } from '@transactions/models/transaction.model';
 import { CreateRecurringDto } from './dto/create-recurring.dto';
 import { UpdateRecurringDto } from './dto/update-recurring.dto';
 import { QueryRecurringDto } from './dto/query-recurring.dto';

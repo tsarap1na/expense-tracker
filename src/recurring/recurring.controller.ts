@@ -16,6 +16,12 @@ export class RecurringController {
         return this.recurringService.create(dto);
     }
 
+    @Post('generate')
+    @ApiOperation({ summary: 'Generate transactions from active recurring templates' })
+    generate() {
+        return this.recurringService.generate();
+    }
+
     @Get()
     @ApiOperation({ summary: 'List recurring templates' })
     findAll(@Query() query: QueryRecurringDto) {
@@ -41,9 +47,4 @@ export class RecurringController {
         return this.recurringService.remove(id);
     }
 
-    @Post('generate')
-    @ApiOperation({ summary: 'Generate transactions from active recurring templates' })
-    generate() {
-        return this.recurringService.generate();
-    }
 }

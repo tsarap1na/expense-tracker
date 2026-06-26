@@ -3,8 +3,9 @@ import {
     CreatedAt, UpdatedAt, BelongsTo,
     ForeignKey
 } from 'sequelize-typescript';
-import { Category } from '../../categories/models/category.model';
-import { TransactionType } from '../../common/enums';
+import { Category } from '@categories/models/category.model';
+import { TransactionType } from '@common/enums';
+import { Recurring } from '@recurring/models/recurring.model'
 
 @Table({ tableName: 'transactions'})
 export class Transaction extends Model {
@@ -22,9 +23,14 @@ export class Transaction extends Model {
     @BelongsTo(() => Category)
     declare category: Category;
 
-    @ForeignKey(() => require('../../recurring/models/recurring.model').Recurring)
-    @Column({ type: DataType.INTEGER, allowNull: true })
+    @ForeignKey(() => Recurring)
+    @Column({ 
+        type: DataType.INTEGER, allowNull: true 
+    })
     declare recurringId: number | null;
+
+    @BelongsTo(() => Recurring)
+    declare recurring: Recurring;
 
     @Column({
         type: DataType.DECIMAL(12, 2), allowNull: false

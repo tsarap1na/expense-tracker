@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, WhereOptions } from 'sequelize';
 import { Category } from './models/category.model';
-import { Transaction } from '../transactions/models/transaction.model';
+import { Transaction } from '@transactions/models/transaction.model';
 import { QueryCategoryDto } from './dto/query-category.dto';
 
 @Injectable()

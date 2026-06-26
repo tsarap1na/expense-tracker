@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsPositive, IsEnum, IsOptional, IsString, IsDateString, IsBoolean } from 'class-validator';
-import { TransactionType } from '../../common/enums';
+import { IsInt, IsPositive, IsEnum, IsOptional, IsString, IsDateString, IsBoolean, MaxLength } from 'class-validator';
+import { TransactionType } from '@common/enums';
 import { Frequency } from '../models/recurring.model';
 
 export class CreateRecurringDto {
@@ -20,6 +20,7 @@ export class CreateRecurringDto {
     @ApiPropertyOptional()
     @IsOptional()
     @IsString()
+    @MaxLength(100)
     description?: string;
 
     @ApiProperty({ enum: Frequency })

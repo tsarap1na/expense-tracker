@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsInt, Min, Max, IsIn, IsEnum, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
-import { TransactionType } from '../../common/enums';
+import { TransactionType } from '@common/enums';
 
 export class QueryTransactionDto {
   @ApiPropertyOptional({ default: 1 })

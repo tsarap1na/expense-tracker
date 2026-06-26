@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op, WhereOptions } from 'sequelize';
 import { Recurring } from './models/recurring.model';
-import { Category } from './../categories/models/category.model';
+import { Category } from '@categories/models/category.model';
 import { QueryRecurringDto } from './dto/query-recurring.dto';
 
 @Injectable()

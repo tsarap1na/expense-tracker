@@ -19,6 +19,13 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "@common/*": ["./src/common/*"],
+      "@categories/*": ["./src/categories/*"],
+      "@transactions/*": ["./src/transactions/*"],
+      "@recurring/*": ["./src/recurring/*"],
+      "@summary/*": ["./src/summary/*"]
+    }
   }
 }
