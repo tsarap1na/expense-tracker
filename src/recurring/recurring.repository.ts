@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op, WhereOptions } from 'sequelize';
+import { Op, WhereOptions, Transaction as SequelizeTransaction } from 'sequelize';
 import { Recurring } from './models/recurring.model';
 import { Category } from '@categories/models/category.model';
 import { QueryRecurringDto } from './dto/query-recurring.dto';
@@ -48,8 +48,8 @@ export class RecurringRepository {
         });
     }
 
-    async update(recurring: Recurring, data: Partial<Recurring>): Promise<Recurring> {
-        return recurring.update(data);
+    async update(recurring: Recurring, data: Partial<Recurring>, transaction?: SequelizeTransaction): Promise<Recurring> {
+        return recurring.update(data, { transaction });
     }
 
     async delete(recurring: Recurring): Promise<void> {

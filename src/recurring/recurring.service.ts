@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectModel, InjectConnection } from '@nestjs/sequelize';
+import { Sequelize } from 'sequelize-typescript';
 import { RecurringRepository } from './recurring.repository';
 import { Category } from '@categories/models/category.model';
 import { Transaction } from '@transactions/models/transaction.model';
@@ -14,6 +15,7 @@ export class RecurringService {
         private readonly recurringRepository: RecurringRepository,
         @InjectModel(Category) private readonly categoryModel: typeof Category,
         @InjectModel(Transaction) private readonly transactionModel: typeof Transaction,
+        @InjectConnection() private readonly sequelize: Sequelize,
     ) {}
 
     async create(dto: CreateRecurringDto): Promise<Recurring> {
@@ -61,23 +63,31 @@ export class RecurringService {
         const created: Transaction[] = [];
 
         for (const template of templates) {
-        const transaction = await this.transactionModel.create({
-            categoryId: template.categoryId,
-            amount: template.amount,
-            type: template.type,
-            description: template.description,
-            date: template.nextRunAt,
-            recurringId: template.id,
+            const transaction = await this.sequelize.transaction(async (t) => {
+                const tx = await this.transactionModel.create(
+                    {
+                        categoryId: template.categoryId,
+                        amount: template.amount,
+                        type: template.type,
+                        description: template.description,
+                        date: template.nextRunAt,
+                        recurringId: template.id,
+                    },
+                    { transaction: t },
+                );
+
+                await this.recurringRepository.update(template, {
+                    nextRunAt: this.calcNextRunAt(template.nextRunAt, template.frequency),
+                }, t );
+
+                return tx;
         });
 
         created.push(transaction);
-        await this.recurringRepository.update(template, {
-            nextRunAt: this.calcNextRunAt(template.nextRunAt, template.frequency),
-        });
-        }
-
-        return { count: created.length, transactions: created };
     }
+
+    return { count: created.length, transactions: created };
+}
 
     private calcNextRunAt(current: Date, frequency: Frequency): Date {
         const next = new Date(current);
