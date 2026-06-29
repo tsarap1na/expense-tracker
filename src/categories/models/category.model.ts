@@ -2,7 +2,7 @@ import {
     Column, DataType, Model, Table, 
     HasMany, CreatedAt, UpdatedAt,
 } from 'sequelize-typescript';
-import { Transaction } from '../../transactions/models/transaction.model';
+import { Transaction } from '@transactions/models/transaction.model';
 
 @Table({tableName: 'categories'})
 export class Category extends Model {

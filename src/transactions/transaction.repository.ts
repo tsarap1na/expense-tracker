@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op, WhereOptions } from 'sequelize';
-import { Transaction } from '../transactions/models/transaction.model';
-import { Category } from '../categories/models/category.model';
+import { Op, WhereOptions, Transaction as SequelizeTransaction } from 'sequelize';
+import { Transaction } from '@transactions/models/transaction.model';
+import { Category } from '@categories/models/category.model';
 import { QueryTransactionDto } from './dto/query-transaction.dto';
 
 @Injectable()
@@ -11,8 +11,8 @@ export class TransactionRepository {
         @InjectModel(Transaction) private readonly transactionModel: typeof Transaction,
     ) {}
 
-    async create(data: Partial<Transaction>): Promise<Transaction> {
-        return this.transactionModel.create(data);
+    async create(data: Partial<Transaction>, transaction?: SequelizeTransaction): Promise<Transaction> {
+        return this.transactionModel.create(data, { transaction });
     }
 
     async findAll(query: QueryTransactionDto) {

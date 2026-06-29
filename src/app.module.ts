@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { Category } from './categories/models/category.model'
-import { Transaction } from './transactions/models/transaction.model'
-import { CategoriesModule } from './categories/categories.module'
-import { TransactionsModule } from './transactions/transactions.module'
-import { SummaryModule } from './summary/summary.module'
+import { Category } from '@categories/models/category.model'
+import { Transaction } from '@transactions/models/transaction.model'
+import { CategoriesModule } from '@categories/categories.module'
+import { TransactionsModule } from '@transactions/transactions.module'
+import { SummaryModule } from '@summary/summary.module'
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { RecurringModule } from '@recurring/recurring.module';
+import { Recurring } from '@recurring/models/recurring.model';
 
 @Module({
   imports: [
@@ -23,12 +25,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         autoLoadModels: true,
         sync: { alter: true },
         logging: false,
-        models: [Category, Transaction],
+        models: [Category, Transaction, Recurring],
       }),
     }),
     CategoriesModule,
     TransactionsModule,
-    SummaryModule
+    SummaryModule,
+    RecurringModule
   ],
 })
 export class AppModule {}

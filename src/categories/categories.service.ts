@@ -5,7 +5,7 @@ import { Category } from './models/category.model';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { QueryCategoryDto } from './dto/query-category.dto';
-import { Transaction } from '../transactions/models/transaction.model'
+import { Transaction } from '@transactions/models/transaction.model'
 import { CategoryRepository } from './category.repository';
 
 @Injectable()
