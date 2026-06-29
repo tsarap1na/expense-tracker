@@ -10,3 +10,22 @@ services:
       POSTGRES_PASSWORD: ${PGPASSWORD}
     ports:
       - '${PGPORT}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    container_name: expense_tracker_api
+    depends_on:
+      - db
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${PGDATABASE}
+      PGUSER: ${PGUSER}
+      PGPASSWORD: ${PGPASSWORD}
+    ports:
+      - '3000:3000'
+
+volumes:
+  postgres_data:
