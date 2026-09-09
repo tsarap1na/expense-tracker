@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsInt, Min, Max, IsIn, IsEnum, IsDateString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsInt, Min, Max, IsIn, IsEnum, IsDateString, IsArray } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import { TransactionType } from '@common/enums';
 
 export class QueryTransactionDto {
@@ -53,4 +53,11 @@ export class QueryTransactionDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortOrder?: 'asc' | 'desc' = 'desc';
+
+  @ApiPropertyOptional({ description: 'Comma-separated tag ids, e.g. 1,2,3' })
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.split(',').map(Number) : value))
+  @IsArray()
+  @IsInt({ each: true })
+  tagIds?: number[];
 }

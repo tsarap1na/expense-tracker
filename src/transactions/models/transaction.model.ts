@@ -1,11 +1,13 @@
 import {
     Column, DataType, Model, Table, 
     CreatedAt, UpdatedAt, BelongsTo,
-    ForeignKey
+    ForeignKey, BelongsToMany
 } from 'sequelize-typescript';
 import { Category } from '@categories/models/category.model';
 import { TransactionType } from '@common/enums';
-import { Recurring } from '@recurring/models/recurring.model'
+import { Recurring } from '@recurring/models/recurring.model';
+import { Tag } from '@tags/models/tag.model';
+import { TransactionTag } from '@tags/models/transaction-tag.model';
 
 @Table({ tableName: 'transactions'})
 export class Transaction extends Model {
@@ -31,6 +33,9 @@ export class Transaction extends Model {
 
     @BelongsTo(() => Recurring)
     declare recurring: Recurring;
+
+    @BelongsToMany(() => Tag, () => TransactionTag)
+    declare tags: Tag[];
 
     @Column({
         type: DataType.DECIMAL(12, 2), allowNull: false

@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsPositive, IsEnum, IsOptional, IsString, IsDateString } from 'class-validator';
+import { IsInt, IsPositive, IsEnum, IsOptional, IsString, IsDateString, IsArray } from 'class-validator';
 import { TransactionType } from '@common/enums';
 
 export class CreateTransactionDto {
+    @ApiProperty()
     @IsInt()
     @IsPositive()
     categoryId!: number;
@@ -23,4 +24,10 @@ export class CreateTransactionDto {
     @IsOptional()
     @IsString()
     description?: string;
+
+    @ApiPropertyOptional({ type: [Number], example: [1, 2] })
+    @IsOptional()
+    @IsArray()
+    @IsInt({ each: true })
+    tagIds?: number[];
 }
