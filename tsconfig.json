@@ -26,7 +26,8 @@
       "@transactions/*": ["./src/transactions/*"],
       "@recurring/*": ["./src/recurring/*"],
       "@summary/*": ["./src/summary/*"],
-      "@tags/*": ["./src/tags/*"]
+      "@tags/*": ["./src/tags/*"],
+      "@budgets/*": ["./src/budgets/*"]
     }
   }
 }

@@ -10,7 +10,8 @@ import { RecurringModule } from '@recurring/recurring.module';
 import { Recurring } from '@recurring/models/recurring.model';
 import { TagsModule } from '@tags/tags.module';
 import { Tag } from '@tags/models/tag.model';
-import { TransactionTag } from '@tags/models/transaction-tag.model'
+import { TransactionTag } from '@tags/models/transaction-tag.model';
+import { BudgetsModule } from '@budgets/budgets.module';
 
 @Module({
   imports: [
@@ -35,7 +36,8 @@ import { TransactionTag } from '@tags/models/transaction-tag.model'
     TransactionsModule,
     SummaryModule,
     RecurringModule,
-    TagsModule
+    TagsModule,
+    BudgetsModule
   ],
 })
 export class AppModule {}

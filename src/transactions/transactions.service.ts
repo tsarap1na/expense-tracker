@@ -4,20 +4,23 @@ import { Op } from 'sequelize';
 import { Transaction } from './models/transaction.model';
 import { Category } from '@categories/models/category.model';
 import { Tag } from '@tags/models/tag.model';
+import { TransactionType } from '@common/enums';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { QueryTransactionDto } from './dto/query-transaction.dto';
 import { TransactionRepository } from './transaction.repository';
+import { BudgetsService } from '@budgets/budgets.service';
 
 @Injectable()
 export class TransactionsService {
     constructor(
         private readonly transactionRepository: TransactionRepository,
+        private readonly budgetsService: BudgetsService,
         @InjectModel(Category) private readonly categoryModel: typeof Category,
         @InjectModel(Tag) private readonly tagModel: typeof Tag,
     ) {}
 
-    async create(dto: CreateTransactionDto): Promise<Transaction> {
+    async create(dto: CreateTransactionDto) {
         const category = await this.categoryModel.findByPk(dto.categoryId);
         if (!category) throw new BadRequestException(`Category #${dto.categoryId} not found`);
 
@@ -34,7 +37,8 @@ export class TransactionsService {
             await this.transactionRepository.setTags(transaction, dto.tagIds);
         }
 
-        return this.findOne(transaction.id);
+        const full = await this.findOne(transaction.id);
+        return this.buildResponseWithBudgetWarning(full);
     }
 
     async findAll(query: QueryTransactionDto) {
@@ -47,7 +51,7 @@ export class TransactionsService {
         return transaction;
     }
 
-    async update(id: number, dto: UpdateTransactionDto): Promise<Transaction> {
+    async update(id: number, dto: UpdateTransactionDto) {
         const transaction = await this.findOne(id);
 
         if (dto.categoryId) {
@@ -65,7 +69,8 @@ export class TransactionsService {
             await this.transactionRepository.setTags(updated, dto.tagIds);
         }
 
-        return this.findOne(id);
+        const full = await this.findOne(id);
+        return this.buildResponseWithBudgetWarning(full);
     }
 
     async remove(id: number): Promise<void> {
@@ -84,5 +89,30 @@ export class TransactionsService {
             const missing = tagIds.filter((id) => !foundIds.includes(id));
             throw new NotFoundException(`Tags not found: ${missing.join(', ')}`);
         }
+    }
+
+    private async buildResponseWithBudgetWarning(transaction: Transaction) {
+        if (transaction.type !== TransactionType.expense) {
+            return { data: transaction };
+        }
+
+        const limitCheck = await this.budgetsService.checkLimit(
+            transaction.categoryId,
+            transaction.date,
+        );
+
+        if (!limitCheck || !limitCheck.exceeded) {
+            return { data: transaction };
+        }
+
+        return {
+            data: transaction,
+            budgetWarning: {
+                categoryId: transaction.categoryId,
+                limitAmount: limitCheck.limitAmount,
+                spent: limitCheck.spent,
+                message: `Budget exceeded: spent ${limitCheck.spent} out of ${limitCheck.limitAmount}`,
+            },
+        };
     }
 }

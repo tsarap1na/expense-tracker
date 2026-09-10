@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op, fn, col, literal } from 'sequelize';
+import { Op, fn, col } from 'sequelize';
 import { Transaction } from '@transactions/models/transaction.model';
 import { TransactionType } from '@common/enums';
 import { QuerySummaryDto } from './query-summary.dto';
+import { validateDateRange } from '@common/validate-date-range.util';
 
 type SummaryRow = {
     type: TransactionType;
@@ -17,9 +18,7 @@ export class SummaryService {
     ){}
 
     async getSummary(dto: QuerySummaryDto) {
-        if (dto.dateFrom && dto.dateTo && new Date(dto.dateTo).getTime() < new Date(dto.dateFrom).getTime()) {
-            throw new BadRequestException('dateTo must be greater than or equal to dateFrom');
-        }
+        validateDateRange(dto.dateFrom, dto.dateTo);
 
         const now = new Date();
         const dateFrom = dto.dateFrom
@@ -37,14 +36,15 @@ export class SummaryService {
             raw: true,
         }) as unknown as SummaryRow[];
 
-    const income = rows.find(r => r.type === TransactionType.income)?.total ?? 0;
-    const expense = rows.find(r => r.type === TransactionType.expense)?.total ?? 0;
+        const income = rows.find(r => r.type === TransactionType.income)?.total ?? 0;
+        const expense = rows.find(r => r.type === TransactionType.expense)?.total ?? 0;
 
-    return {
-        dateFrom,
-        dateTo,
-        income: Number(income),
-        expense: Number(expense),
-        balance: Number(income) - Number(expense),
-    };
-} }
+        return {
+            dateFrom,
+            dateTo,
+            income: Number(income),
+            expense: Number(expense),
+            balance: Number(income) - Number(expense),
+        };
+    }
+}
