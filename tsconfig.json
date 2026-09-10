@@ -27,7 +27,8 @@
       "@recurring/*": ["./src/recurring/*"],
       "@summary/*": ["./src/summary/*"],
       "@tags/*": ["./src/tags/*"],
-      "@budgets/*": ["./src/budgets/*"]
+      "@budgets/*": ["./src/budgets/*"],
+      "@stats/*": ["./src/stats/*"]
     }
   }
 }

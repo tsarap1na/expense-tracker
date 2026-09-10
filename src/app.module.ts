@@ -12,6 +12,7 @@ import { TagsModule } from '@tags/tags.module';
 import { Tag } from '@tags/models/tag.model';
 import { TransactionTag } from '@tags/models/transaction-tag.model';
 import { BudgetsModule } from '@budgets/budgets.module';
+import { StatsModule } from '@stats/stats.module';
 
 @Module({
   imports: [
@@ -37,7 +38,8 @@ import { BudgetsModule } from '@budgets/budgets.module';
     SummaryModule,
     RecurringModule,
     TagsModule,
-    BudgetsModule
+    BudgetsModule,
+    StatsModule
   ],
 })
 export class AppModule {}
