@@ -13,6 +13,7 @@ import { Tag } from '@tags/models/tag.model';
 import { TransactionTag } from '@tags/models/transaction-tag.model';
 import { BudgetsModule } from '@budgets/budgets.module';
 import { StatsModule } from '@stats/stats.module';
+import { ImportExportModule } from '@import-export/import-export.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { StatsModule } from '@stats/stats.module';
       }),
     }),
     CategoriesModule,
+    ImportExportModule,
     TransactionsModule,
     SummaryModule,
     RecurringModule,
