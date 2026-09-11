@@ -13,23 +13,24 @@ export class ImportExportRepository {
         private readonly sequelize: Sequelize,
     ) {}
 
-    async findForExport(where: WhereOptions<Transaction>): Promise<Transaction[]> {
+    async findForExport(userId: number, where: WhereOptions<Transaction>): Promise<Transaction[]> {
         return this.transactionModel.findAll({
-            where,
+            where: { ...where, userId },
             include: [{ model: Category, attributes: ['name'] }],
             order: [['date', 'ASC']],
         });
     }
 
-    async findCategoriesByNames(names: string[]): Promise<Category[]> {
-        return this.categoryModel.findAll({ where: { name: { [Op.in]: names } } });
+    async findCategoriesByNames(userId: number, names: string[]): Promise<Category[]> {
+        return this.categoryModel.findAll({ where: { name: { [Op.in]: names }, userId } });
     }
 
     async findExistingByCandidates(
+        userId: number,
         candidates: { date: string; amount: number; description: string }[],
     ): Promise<any[]> {
         return this.transactionModel.findAll({
-            where: { [Op.or]: candidates },
+            where: { userId, [Op.or]: candidates },
             raw: true,
         });
     }

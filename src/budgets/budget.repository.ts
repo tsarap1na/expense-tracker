@@ -13,26 +13,28 @@ export class BudgetRepository {
         @InjectModel(Transaction) private readonly transactionModel: typeof Transaction,
     ) {}
 
-    async create(data: Partial<Budget>): Promise<Budget> {
-        return this.budgetModel.create(data);
+    async create(userId: number, data: Partial<Budget>): Promise<Budget> {
+        return this.budgetModel.create({ ...data, userId });
     }
 
-    async findAll(month?: string): Promise<Budget[]> {
-        const where = month ? { month } : {};
+    async findAll(userId: number, month?: string): Promise<Budget[]> {
+        const where: any = { userId };
+        if (month) where.month = month;
         return this.budgetModel.findAll({
             where,
             include: [{ model: Category, attributes: ['id', 'name'] }],
         });
     }
 
-    async findById(id: number): Promise<Budget | null> {
-        return this.budgetModel.findByPk(id, {
+    async findById(userId: number, id: number): Promise<Budget | null> {
+        return this.budgetModel.findOne({
+            where: { id, userId },
             include: [{ model: Category, attributes: ['id', 'name'] }],
         });
     }
 
-    async findByCategoryAndMonth(categoryId: number, month: string): Promise<Budget | null> {
-        return this.budgetModel.findOne({ where: { categoryId, month } });
+    async findByCategoryAndMonth(userId: number, categoryId: number, month: string): Promise<Budget | null> {
+        return this.budgetModel.findOne({ where: { categoryId, month, userId } });
     }
 
     async update(budget: Budget, data: Partial<Budget>): Promise<Budget> {
@@ -43,10 +45,11 @@ export class BudgetRepository {
         await budget.destroy();
     }
 
-    async getSpentAmount(categoryId: number, start: Date, end: Date): Promise<number> {
+    async getSpentAmount(userId: number, categoryId: number, start: Date, end: Date): Promise<number> {
         const result = await this.transactionModel.findOne({
             attributes: [[fn('COALESCE', fn('SUM', col('amount')), 0), 'total']],
             where: {
+                userId,
                 categoryId,
                 type: TransactionType.expense,
                 date: { [Op.between]: [start, end] },
@@ -56,10 +59,11 @@ export class BudgetRepository {
         return Number((result as any).total);
     }
 
-    async getSpentAmountsByCategories(categoryIds: number[], start: Date, end: Date): Promise<Map<number, number>> {
+    async getSpentAmountsByCategories(userId: number, categoryIds: number[], start: Date, end: Date): Promise<Map<number, number>> {
         const rows = await this.transactionModel.findAll({
             attributes: ['categoryId', [fn('SUM', col('amount')), 'total']],
             where: {
+                userId,
                 categoryId: { [Op.in]: categoryIds },
                 type: TransactionType.expense,
                 date: { [Op.between]: [start, end] },

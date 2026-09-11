@@ -30,7 +30,9 @@
       "@tags/*": ["./src/tags/*"],
       "@budgets/*": ["./src/budgets/*"],
       "@stats/*": ["./src/stats/*"],
-      "@import-export/*": ["./src/import-export/*"]
+      "@import-export/*": ["./src/import-export/*"],
+      "@users/*": ["./src/users/*"],
+      "@auth/*": ["./src/auth/*"]
     }
   }
 }

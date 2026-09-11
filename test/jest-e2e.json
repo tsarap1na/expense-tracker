@@ -14,6 +14,8 @@
     "^@recurring/(.*)$": "<rootDir>/../src/recurring/$1",
     "^@summary/(.*)$": "<rootDir>/../src/summary/$1",
     "^@stats/(.*)$": "<rootDir>/../src/stats/$1",
-    "^@import-export/(.*)$": "<rootDir>/../src/import-export/$1"
+    "^@import-export/(.*)$": "<rootDir>/../src/import-export/$1",
+    "^@users/(.*)$": "<rootDir>/../src/users/$1",
+    "^@auth/(.*)$": "<rootDir>/../src/auth/$1"
   }
 }

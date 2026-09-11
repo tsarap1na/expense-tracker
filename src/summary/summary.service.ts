@@ -17,7 +17,7 @@ export class SummaryService {
         @InjectModel(Transaction) private readonly transactionModel: typeof Transaction,
     ){}
 
-    async getSummary(dto: QuerySummaryDto) {
+    async getSummary(userId: number, dto: QuerySummaryDto) {
         validateDateRange(dto.dateFrom, dto.dateTo);
 
         const now = new Date();
@@ -31,7 +31,7 @@ export class SummaryService {
 
         const rows = await this.transactionModel.findAll({
             attributes: ['type', [fn('SUM', col('amount')), 'total']],
-            where: { date: { [Op.between]: [dateFrom, dateTo] } },
+            where: { userId, date: { [Op.between]: [dateFrom, dateTo] } },
             group: ['type'],
             raw: true,
         }) as unknown as SummaryRow[];

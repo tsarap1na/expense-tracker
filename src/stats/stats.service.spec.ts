@@ -6,6 +6,8 @@ describe('StatsService', () => {
     let service: StatsService;
     let statsRepository: jest.Mocked<StatsRepository>;
 
+    const userId = 1;
+
     beforeEach(async () => {
         const mockStatsRepository = {
             getCategoryTotals: jest.fn(),
@@ -31,7 +33,7 @@ describe('StatsService', () => {
             { month: '2026-09', type: 'expense', total: '500' },
         ]);
 
-        const result = await service.getMonthlyDynamics(6);
+        const result = await service.getMonthlyDynamics(userId, 6);
 
         expect(result).toHaveLength(6);
         expect(result.every((r) => r.income === 0 || r.expense >= 0)).toBe(true);
@@ -42,8 +44,18 @@ describe('StatsService', () => {
     it('returns exactly N months for different count parameters', async () => {
         statsRepository.getMonthlyTotals.mockResolvedValue([]);
 
-        const result = await service.getMonthlyDynamics(3);
+        const result = await service.getMonthlyDynamics(userId, 3);
 
         expect(result).toHaveLength(3);
+    });
+
+    it('passes userId to the repository call', async () => {
+        statsRepository.getMonthlyTotals.mockResolvedValue([]);
+
+        await service.getMonthlyDynamics(userId, 6);
+
+        expect(statsRepository.getMonthlyTotals).toHaveBeenCalledWith(
+            userId, expect.any(Date), expect.any(Date),
+        );
     });
 });

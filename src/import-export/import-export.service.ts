@@ -15,6 +15,7 @@ export class ImportExportService {
     constructor(private readonly importExportRepository: ImportExportRepository) {}
 
     async exportTransactions(
+        userId: number,
         query: ExportQueryDto,
     ): Promise<{ content: string; contentType: string; filename: string }> {
         validateDateRange(query.dateFrom, query.dateTo);
@@ -31,7 +32,7 @@ export class ImportExportService {
             where.date = dateFilter;
         }
 
-        const transactions = await this.importExportRepository.findForExport(where);
+        const transactions = await this.importExportRepository.findForExport(userId, where);
 
         const rows: ExportRow[] = transactions.map((t: any) => ({
             amount: Number(t.amount).toFixed(2),
@@ -56,7 +57,7 @@ export class ImportExportService {
         };
     }
 
-    async importTransactions(file: Express.Multer.File): Promise<ImportReportDto> {
+    async importTransactions(userId: number, file: Express.Multer.File): Promise<ImportReportDto> {
         const rawRows = parseImportFile(file.buffer, file.mimetype);
 
         const errors: { row: number; reason: string }[] = [];
@@ -76,10 +77,11 @@ export class ImportExportService {
         }
 
         const categoryNames = [...new Set(validRows.map((r) => r.data.categoryName))];
-        const categories = await this.importExportRepository.findCategoriesByNames(categoryNames);
+        const categories = await this.importExportRepository.findCategoriesByNames(userId, categoryNames);
         const categoryIdByName = new Map(categories.map((c: any) => [c.name, c.id]));
 
         const existing = await this.importExportRepository.findExistingByCandidates(
+            userId,
             validRows.map((r) => ({
                 date: r.data.date,
                 amount: r.data.amount,
@@ -118,6 +120,7 @@ export class ImportExportService {
                 date: new Date(data.date),
                 type: data.type,
                 categoryId,
+                userId,
             } as Partial<Transaction>);
         }
 

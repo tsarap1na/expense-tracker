@@ -11,17 +11,16 @@ export class CategoryRepository {
         @InjectModel(Category) private readonly categoryModel: typeof Category,
     ) {}
 
-    async create(data: Partial<Category>): Promise<Category> {
-        return this.categoryModel.create(data);
+    async create(userId: number, data: Partial<Category>): Promise<Category> {
+        return this.categoryModel.create({ ...data, userId });
     }
 
-    async findAll(query: QueryCategoryDto) {
+    async findAll(userId: number, query: QueryCategoryDto) {
         const { page = 1, limit = 20, search, sortBy = 'name', sortOrder = 'asc' } = query;
         const offset = (page - 1) * limit;
 
-        const where: WhereOptions<Category> = search
-        ? { name: { [Op.iLike]: `%${search}%` } }
-        : {};
+        const where: WhereOptions<Category> = { userId };
+        if (search) where.name = { [Op.iLike]: `%${search}%` };
 
         const { rows: data, count: total } = await this.categoryModel.findAndCountAll({
             where,
@@ -32,17 +31,17 @@ export class CategoryRepository {
         return { data, total, page, limit };
     }
 
-    async findById(id: number): Promise<Category | null> {
-        return this.categoryModel.findByPk(id);
+    async findById(userId: number, id: number): Promise<Category | null> {
+        return this.categoryModel.findOne({ where: { id, userId } });
     }
 
-    async findByName(name: string): Promise<Category | null> {
-        return this.categoryModel.findOne({ where: { name } });
+    async findByName(userId: number, name: string): Promise<Category | null> {
+        return this.categoryModel.findOne({ where: { name, userId } });
     }
 
-    async countTransactions(id: number): Promise<number> {
+    async countTransactions(userId: number, id: number): Promise<number> {
         return this.categoryModel.count({
-            where: { id },
+            where: { id, userId },
             include: [{ model: Transaction, required: true }],
         });
     }

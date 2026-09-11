@@ -18,6 +18,7 @@ async function bootstrap() {
   .setTitle('Expense Tracker')
   .setDescription('Expense Tracker API')
   .setVersion('1.0')
+  .addBearerAuth()
   .build();
 
   const document = SwaggerModule.createDocument(app, config);

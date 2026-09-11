@@ -1,6 +1,9 @@
-import { Column, DataType, Model, Table, ForeignKey, BelongsTo, CreatedAt, UpdatedAt } from 'sequelize-typescript';
+import {
+    Column, DataType, Model, Table, ForeignKey, BelongsTo, CreatedAt, UpdatedAt
+} from 'sequelize-typescript';
 import { Category } from '@categories/models/category.model';
 import { TransactionType } from '@common/enums';
+import { User } from '@users/models/user.model';
 
 export enum Frequency {
     day = 'day',
@@ -19,6 +22,13 @@ export class Recurring extends Model {
 
     @BelongsTo(() => Category)
     declare category: Category;
+
+    @ForeignKey(() => User)
+    @Column({ type: DataType.INTEGER, allowNull: false, onDelete: 'CASCADE' })
+    declare userId: number;
+
+    @BelongsTo(() => User)
+    declare user: User;
 
     @Column({ type: DataType.DECIMAL(12, 2), allowNull: false })
     declare amount: number;

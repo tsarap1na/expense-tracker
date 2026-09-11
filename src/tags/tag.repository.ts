@@ -10,25 +10,25 @@ export class TagRepository {
         @InjectModel(Tag) private readonly tagModel: typeof Tag,
     ) {}
 
-    async create(data: Partial<Tag>): Promise<Tag> {
-        return this.tagModel.create(data);
+    async create(userId: number, data: Partial<Tag>): Promise<Tag> {
+        return this.tagModel.create({ ...data, userId });
     }
 
-    async findAll(): Promise<Tag[]> {
-        return this.tagModel.findAll({ order: [['name', 'ASC']] });
+    async findAll(userId: number): Promise<Tag[]> {
+        return this.tagModel.findAll({ where: { userId }, order: [['name', 'ASC']] });
     }
 
-    async findById(id: number): Promise<Tag | null> {
-        return this.tagModel.findByPk(id);
+    async findById(userId: number, id: number): Promise<Tag | null> {
+        return this.tagModel.findOne({ where: { id, userId } });
     }
 
-    async findByName(name: string): Promise<Tag | null> {
-        return this.tagModel.findOne({ where: { name } });
+    async findByName(userId: number, name: string): Promise<Tag | null> {
+        return this.tagModel.findOne({ where: { name, userId } });
     }
 
-    async findByIds(ids: number[]): Promise<Tag[]> {
+    async findByIds(userId: number, ids: number[]): Promise<Tag[]> {
         return this.tagModel.findAll({
-            where: { id: { [Op.in]: ids } },
+            where: { id: { [Op.in]: ids }, userId },
             attributes: ['id'],
         });
     }
@@ -41,8 +41,9 @@ export class TagRepository {
         await tag.destroy();
     }
 
-    async findAllWithCount(): Promise<Array<{ id: number; name: string; transactionsCount: string }>> {
+    async findAllWithCount(userId: number): Promise<Array<{ id: number; name: string; transactionsCount: string }>> {
         return this.tagModel.findAll({
+            where: { userId },
             attributes: [
                 'id',
                 'name',

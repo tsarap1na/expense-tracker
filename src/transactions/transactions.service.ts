@@ -20,15 +20,15 @@ export class TransactionsService {
         @InjectModel(Tag) private readonly tagModel: typeof Tag,
     ) {}
 
-    async create(dto: CreateTransactionDto) {
-        const category = await this.categoryModel.findByPk(dto.categoryId);
+    async create(userId: number, dto: CreateTransactionDto) {
+        const category = await this.categoryModel.findOne({ where: { id: dto.categoryId, userId } });
         if (!category) throw new BadRequestException(`Category #${dto.categoryId} not found`);
 
         if (dto.tagIds) {
-            await this.validateTagIds(dto.tagIds);
+            await this.validateTagIds(userId, dto.tagIds);
         }
 
-        const transaction = await this.transactionRepository.create({
+        const transaction = await this.transactionRepository.create(userId, {
             ...dto,
             date: new Date(dto.date),
         });
@@ -37,30 +37,30 @@ export class TransactionsService {
             await this.transactionRepository.setTags(transaction, dto.tagIds);
         }
 
-        const full = await this.findOne(transaction.id);
-        return this.buildResponseWithBudgetWarning(full);
+        const full = await this.findOne(userId, transaction.id);
+        return this.buildResponseWithBudgetWarning(userId, full);
     }
 
-    async findAll(query: QueryTransactionDto) {
-        return this.transactionRepository.findAll(query);
+    async findAll(userId: number, query: QueryTransactionDto) {
+        return this.transactionRepository.findAll(userId, query);
     }
 
-    async findOne(id: number): Promise<Transaction> {
-        const transaction = await this.transactionRepository.findById(id);
+    async findOne(userId: number, id: number): Promise<Transaction> {
+        const transaction = await this.transactionRepository.findById(userId, id);
         if (!transaction) throw new NotFoundException(`Transaction #${id} not found`);
         return transaction;
     }
 
-    async update(id: number, dto: UpdateTransactionDto) {
-        const transaction = await this.findOne(id);
+    async update(userId: number, id: number, dto: UpdateTransactionDto) {
+        const transaction = await this.findOne(userId, id);
 
         if (dto.categoryId) {
-            const category = await this.categoryModel.findByPk(dto.categoryId);
+            const category = await this.categoryModel.findOne({ where: { id: dto.categoryId, userId } });
             if (!category) throw new BadRequestException(`Category #${dto.categoryId} not found`);
         }
 
         if (dto.tagIds) {
-            await this.validateTagIds(dto.tagIds);
+            await this.validateTagIds(userId, dto.tagIds);
         }
 
         const updated = await this.transactionRepository.update(transaction, dto as Partial<Transaction>);
@@ -69,19 +69,19 @@ export class TransactionsService {
             await this.transactionRepository.setTags(updated, dto.tagIds);
         }
 
-        const full = await this.findOne(id);
-        return this.buildResponseWithBudgetWarning(full);
+        const full = await this.findOne(userId, id);
+        return this.buildResponseWithBudgetWarning(userId, full);
     }
 
-    async remove(id: number): Promise<void> {
-        const transaction = await this.findOne(id);
+    async remove(userId: number, id: number): Promise<void> {
+        const transaction = await this.findOne(userId, id);
         await this.transactionRepository.delete(transaction);
     }
 
-    private async validateTagIds(tagIds: number[]): Promise<void> {
+    private async validateTagIds(userId: number, tagIds: number[]): Promise<void> {
         if (tagIds.length === 0) return;
         const found = await this.tagModel.findAll({
-            where: { id: { [Op.in]: tagIds } },
+            where: { id: { [Op.in]: tagIds }, userId },
             attributes: ['id'],
         });
         if (found.length !== tagIds.length) {
@@ -91,14 +91,11 @@ export class TransactionsService {
         }
     }
 
-    private async buildResponseWithBudgetWarning(transaction: Transaction) {
-        if (transaction.type !== TransactionType.expense) {
-            return { data: transaction };
-        }
+    private async buildResponseWithBudgetWarning(userId: number, transaction: Transaction) {
+        if (transaction.type !== TransactionType.expense) return { data: transaction };
 
         const limitCheck = await this.budgetsService.checkLimit(
-            transaction.categoryId,
-            transaction.date,
+            userId, transaction.categoryId, transaction.date,
         );
 
         if (!limitCheck || !limitCheck.exceeded) {

@@ -14,6 +14,9 @@ import { TransactionTag } from '@tags/models/transaction-tag.model';
 import { BudgetsModule } from '@budgets/budgets.module';
 import { StatsModule } from '@stats/stats.module';
 import { ImportExportModule } from '@import-export/import-export.module';
+import { UsersModule } from '@users/users.module';
+import { AuthModule } from '@auth/auth.module';
+import { User } from '@users/models/user.model';
 
 @Module({
   imports: [
@@ -31,7 +34,7 @@ import { ImportExportModule } from '@import-export/import-export.module';
         autoLoadModels: true,
         sync: { alter: true },
         logging: false,
-        models: [Category, Transaction, Recurring, Tag, TransactionTag],
+        models: [Category, Transaction, Recurring, Tag, TransactionTag, User],
       }),
     }),
     CategoriesModule,
@@ -41,7 +44,9 @@ import { ImportExportModule } from '@import-export/import-export.module';
     RecurringModule,
     TagsModule,
     BudgetsModule,
-    StatsModule
+    StatsModule,
+    UsersModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

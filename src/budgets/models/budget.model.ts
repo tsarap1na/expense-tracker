@@ -3,11 +3,12 @@ import {
     CreatedAt, UpdatedAt, BelongsTo, ForeignKey
 } from 'sequelize-typescript';
 import { Category } from '@categories/models/category.model';
+import { User } from '@users/models/user.model';
 
 @Table({
     tableName: 'budgets',
     indexes: [
-        { unique: true, fields: ['categoryId', 'month'], name: 'uniq_budget_category_month' },
+        { unique: true, fields: ['userId', 'categoryId', 'month'], name: 'uniq_budget_user_category_month' },
     ],
 })
 export class Budget extends Model {
@@ -24,6 +25,13 @@ export class Budget extends Model {
 
     @BelongsTo(() => Category)
     declare category: Category;
+
+    @ForeignKey(() => User)
+    @Column({ type: DataType.INTEGER, allowNull: false, onDelete: 'CASCADE' })
+    declare userId: number;
+
+    @BelongsTo(() => User)
+    declare user: User;
 
     @Column({
         type: DataType.DATEONLY, allowNull: false

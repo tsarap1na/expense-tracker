@@ -8,6 +8,7 @@ import { TransactionType } from '@common/enums';
 import { Recurring } from '@recurring/models/recurring.model';
 import { Tag } from '@tags/models/tag.model';
 import { TransactionTag } from '@tags/models/transaction-tag.model';
+import { User } from '@users/models/user.model';
 
 @Table({ tableName: 'transactions'})
 export class Transaction extends Model {
@@ -56,6 +57,13 @@ export class Transaction extends Model {
         type: DataType.DATE
     })
     declare date: Date;
+
+    @ForeignKey(() => User)
+    @Column({ type: DataType.INTEGER, allowNull: false, onDelete: 'CASCADE' })
+    declare userId: number;
+
+    @BelongsTo(() => User)
+    declare user: User;
 
     @CreatedAt
     declare createdAt: Date;

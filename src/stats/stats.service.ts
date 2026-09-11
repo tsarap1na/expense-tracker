@@ -13,7 +13,7 @@ import { Transaction } from '@transactions/models/transaction.model';
 export class StatsService {
     constructor(private readonly statsRepository: StatsRepository) {}
 
-    async getCategoryReport(query: CategoryReportQueryDto) {
+    async getCategoryReport(userId: number, query: CategoryReportQueryDto) {
         validateDateRange(query.dateFrom, query.dateTo);
 
         const where: WhereOptions<Transaction> = {};
@@ -31,7 +31,7 @@ export class StatsService {
             where.type = query.type as TransactionType;
         }
 
-        const rows = await this.statsRepository.getCategoryTotals(where);
+        const rows = await this.statsRepository.getCategoryTotals(userId, where);
 
         return rows.map((r: any) => ({
             categoryId: r.categoryId,
@@ -41,13 +41,13 @@ export class StatsService {
         }));
     }
 
-    async getMonthlyDynamics(monthsCount = 6) {
+    async getMonthlyDynamics(userId: number, monthsCount = 6) {
         const months = getLastNMonths(monthsCount);
 
         const rangeStart = getMonthRange(`${months[0]}-01`).start;
         const rangeEnd = getMonthRange(`${months[months.length - 1]}-01`).end;
 
-        const rows = await this.statsRepository.getMonthlyTotals(rangeStart, rangeEnd);
+        const rows = await this.statsRepository.getMonthlyTotals(userId, rangeStart, rangeEnd);
 
         const dataByMonth = new Map<string, { income: number; expense: number }>();
         for (const row of rows as any[]) {
@@ -62,7 +62,7 @@ export class StatsService {
         });
     }
 
-    async getTopCategories(query: PeriodQueryDto, limit = 5) {
+    async getTopCategories(userId: number, query: PeriodQueryDto, limit = 5) {
         validateDateRange(query.dateFrom, query.dateTo);
 
         const where: WhereOptions<Transaction> = { type: TransactionType.expense };
@@ -77,7 +77,7 @@ export class StatsService {
             where.date = dateFilter;
         }
 
-        const rows = await this.statsRepository.getTopCategories(where, limit);
+        const rows = await this.statsRepository.getTopCategories(userId, where, limit);
 
         return rows.map((r: any) => ({
             categoryId: r.categoryId,

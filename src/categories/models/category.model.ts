@@ -1,10 +1,17 @@
 import {
     Column, DataType, Model, Table, 
     HasMany, CreatedAt, UpdatedAt,
+    ForeignKey, BelongsTo
 } from 'sequelize-typescript';
 import { Transaction } from '@transactions/models/transaction.model';
+import { User } from '@users/models/user.model';
 
-@Table({tableName: 'categories'})
+@Table({
+    tableName: 'categories',
+    indexes: [
+        { unique: true, fields: ['userId', 'name'], name: 'uniq_category_user_name' },
+    ],
+})
 export class Category extends Model {
     @Column({
         type: DataType.INTEGER, autoIncrement: true, primaryKey: true
@@ -12,7 +19,7 @@ export class Category extends Model {
     declare id: number;
 
     @Column({
-        type: DataType.STRING(50), unique: true, allowNull: false
+        type: DataType.STRING(50), allowNull: false
     })
     declare name: string;
 
@@ -20,6 +27,13 @@ export class Category extends Model {
         type: DataType.STRING(7), allowNull: false
     })
     declare color: string;
+
+    @ForeignKey(() => User)
+    @Column({ type: DataType.INTEGER, allowNull: false, onDelete: 'CASCADE' })
+    declare userId: number;
+
+    @BelongsTo(() => User)
+    declare user: User;
 
     @CreatedAt
     declare createdAt: Date;
@@ -29,5 +43,4 @@ export class Category extends Model {
 
     @HasMany(() => Transaction)
     declare transactions: Transaction[];
-
 }

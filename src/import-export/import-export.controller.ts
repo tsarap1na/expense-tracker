@@ -1,21 +1,29 @@
 import {
-    Controller, Get, Post, Query, Res, UploadedFile, UseInterceptors, BadRequestException,
+    Controller, Get, Post, Query, Res, UploadedFile, UseInterceptors, BadRequestException, UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiConsumes, ApiBody, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiConsumes, ApiBody, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { ImportExportService } from './import-export.service';
 import { ExportQueryDto } from './dto/export-query.dto';
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { CurrentUser } from '@auth/decorators/current-user.decorator';
 
 @ApiTags('import-export')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('transactions')
 export class ImportExportController {
     constructor(private readonly importExportService: ImportExportService) {}
 
     @Get('export')
     @ApiOperation({ summary: 'Export transactions to JSON or CSV' })
-    async export(@Query() query: ExportQueryDto, @Res() res: Response) {
-        const { content, contentType, filename } = await this.importExportService.exportTransactions(query);
+    async export(
+        @CurrentUser() user: { id: number },
+        @Query() query: ExportQueryDto,
+        @Res() res: Response,
+    ) {
+        const { content, contentType, filename } = await this.importExportService.exportTransactions(user.id, query);
         res.set({
             'Content-Type': contentType,
             'Content-Disposition': `attachment; filename="${filename}"`,
@@ -28,10 +36,10 @@ export class ImportExportController {
     @ApiConsumes('multipart/form-data')
     @ApiBody({ schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } } })
     @UseInterceptors(FileInterceptor('file'))
-    async import(@UploadedFile() file: Express.Multer.File) {
+    async import(@CurrentUser() user: { id: number }, @UploadedFile() file: Express.Multer.File) {
         if (!file) {
             throw new BadRequestException('File is required');
         }
-        return this.importExportService.importTransactions(file);
+        return this.importExportService.importTransactions(user.id, file);
     }
 }

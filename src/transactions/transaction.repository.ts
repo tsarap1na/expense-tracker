@@ -13,15 +13,15 @@ export class TransactionRepository {
         @InjectModel(TransactionTag) private readonly transactionTagModel: typeof TransactionTag,
     ) {}
 
-    async create(data: Partial<Transaction>, transaction?: SequelizeTransaction): Promise<Transaction> {
-        return this.transactionModel.create(data, { transaction });
+    async create(userId: number, data: Partial<Transaction>, transaction?: SequelizeTransaction): Promise<Transaction> {
+        return this.transactionModel.create({ ...data, userId }, { transaction });
     }
 
-    async findAll(query: QueryTransactionDto) {
+    async findAll(userId: number, query: QueryTransactionDto) {
         const { page = 1, limit = 20, dateFrom, dateTo, type, categoryId, search, tagIds, sortBy = 'date', sortOrder = 'desc' } = query;
         const offset = (page - 1) * limit;
 
-        const where: WhereOptions<Transaction> = {};
+        const where: WhereOptions<Transaction> = { userId };
         if (type) where.type = type;
         if (categoryId) where.categoryId = categoryId;
         if (search) where.description = { [Op.iLike]: `%${search}%` };
@@ -37,19 +37,14 @@ export class TransactionRepository {
         }
 
         if (tagIds && tagIds.length > 0) {
-            const ids = await this.findTransactionIdsByTags(tagIds);
-            if (ids.length === 0) {
-                return { data: [], total: 0, page, limit };
-            }
+            const ids = await this.findTransactionIdsByTags(userId, tagIds);
+            if (ids.length === 0) return { data: [], total: 0, page, limit };
             where.id = { [Op.in]: ids };
         }
 
         const { rows: data, count: total } = await this.transactionModel.findAndCountAll({
             where,
-            include: [
-                { model: Category, attributes: ['id', 'name', 'color'] },
-                { association: 'tags' },
-            ],
+            include: [{ model: Category, attributes: ['id', 'name', 'color'] }, { association: 'tags' }],
             distinct: true,
             order: [[sortBy, sortOrder.toUpperCase()]],
             limit,
@@ -59,12 +54,10 @@ export class TransactionRepository {
         return { data, total, page, limit };
     }
 
-    async findById(id: number): Promise<Transaction | null> {
-        return this.transactionModel.findByPk(id, {
-            include: [
-                { model: Category, attributes: ['id', 'name', 'color'] },
-                { association: 'tags' },
-            ],
+    async findById(userId: number, id: number): Promise<Transaction | null> {
+        return this.transactionModel.findOne({
+            where: { id, userId },
+            include: [{ model: Category, attributes: ['id', 'name', 'color'] }, { association: 'tags' }],
         });
     }
 
@@ -80,9 +73,14 @@ export class TransactionRepository {
         await (transaction as any).$set('tags', tagIds);
     }
 
-    private async findTransactionIdsByTags(tagIds: number[]): Promise<number[]> {
+    private async findTransactionIdsByTags(userId: number, tagIds: number[]): Promise<number[]> {
         const rows = await this.transactionTagModel.findAll({
             where: { tagId: { [Op.in]: tagIds } },
+            include: [{
+                model: Transaction,
+                where: { userId },
+                attributes: [],
+            }],
             attributes: ['transactionId'],
             group: ['transactionId'],
             raw: true,

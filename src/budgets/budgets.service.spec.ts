@@ -6,12 +6,15 @@ describe('BudgetsService', () => {
     let service: BudgetsService;
     let budgetRepository: jest.Mocked<BudgetRepository>;
 
+    const userId = 1;
+
     beforeEach(async () => {
         const mockBudgetRepository = {
             findByCategoryAndMonth: jest.fn(),
             getSpentAmount: jest.fn(),
             findAll: jest.fn(),
             getSpentAmountsByCategories: jest.fn(),
+            create: jest.fn(),
         };
 
         const module: TestingModule = await Test.createTestingModule({
@@ -31,7 +34,7 @@ describe('BudgetsService', () => {
         it('returns null if there is no budget for the category/month', async () => {
             budgetRepository.findByCategoryAndMonth.mockResolvedValue(null);
 
-            const result = await service.checkLimit(1, new Date('2026-09-15'));
+            const result = await service.checkLimit(userId, 1, new Date('2026-09-15'));
 
             expect(result).toBeNull();
             expect(budgetRepository.getSpentAmount).not.toHaveBeenCalled();
@@ -41,7 +44,7 @@ describe('BudgetsService', () => {
             budgetRepository.findByCategoryAndMonth.mockResolvedValue({ limitAmount: '10000.00' } as any);
             budgetRepository.getSpentAmount.mockResolvedValue(5000);
 
-            const result = await service.checkLimit(1, new Date('2026-09-15'));
+            const result = await service.checkLimit(userId, 1, new Date('2026-09-15'));
 
             expect(result).toEqual({ exceeded: false, limitAmount: 10000, spent: 5000 });
         });
@@ -50,7 +53,7 @@ describe('BudgetsService', () => {
             budgetRepository.findByCategoryAndMonth.mockResolvedValue({ limitAmount: '10000.00' } as any);
             budgetRepository.getSpentAmount.mockResolvedValue(11000);
 
-            const result = await service.checkLimit(1, new Date('2026-09-15'));
+            const result = await service.checkLimit(userId, 1, new Date('2026-09-15'));
 
             expect(result?.exceeded).toBe(true);
         });
@@ -59,7 +62,7 @@ describe('BudgetsService', () => {
             budgetRepository.findByCategoryAndMonth.mockResolvedValue({ limitAmount: '10000.00' } as any);
             budgetRepository.getSpentAmount.mockResolvedValue(10000);
 
-            const result = await service.checkLimit(1, new Date('2026-09-15'));
+            const result = await service.checkLimit(userId, 1, new Date('2026-09-15'));
 
             expect(result?.exceeded).toBe(false);
         });
@@ -69,7 +72,7 @@ describe('BudgetsService', () => {
         it('returns an empty array if there is no budget for the month', async () => {
             budgetRepository.findAll.mockResolvedValue([]);
 
-            const result = await service.getSummary('2026-09');
+            const result = await service.getSummary(userId, '2026-09');
 
             expect(result).toEqual([]);
             expect(budgetRepository.getSpentAmountsByCategories).not.toHaveBeenCalled();
@@ -81,7 +84,7 @@ describe('BudgetsService', () => {
             ]);
             budgetRepository.getSpentAmountsByCategories.mockResolvedValue(new Map([[1, 3333]]));
 
-            const result = await service.getSummary('2026-09');
+            const result = await service.getSummary(userId, '2026-09');
 
             expect(result[0].usedPercentage).toBe(33);
         });
@@ -92,7 +95,7 @@ describe('BudgetsService', () => {
             budgetRepository.findByCategoryAndMonth.mockResolvedValue({ id: 1 } as any);
 
             await expect(
-                service.create({ categoryId: 1, month: '2026-09', limitAmount: 5000 }),
+                service.create(userId, { categoryId: 1, month: '2026-09', limitAmount: 5000 }),
             ).rejects.toThrow('already exists');
         });
     });

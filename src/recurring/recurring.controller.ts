@@ -1,50 +1,60 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Query, ParseIntPipe, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import {
+    Controller, Get, Post, Patch, Delete, Body, Param, Query,
+    ParseIntPipe, HttpCode, HttpStatus, UseGuards,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RecurringService } from './recurring.service';
 import { CreateRecurringDto } from './dto/create-recurring.dto';
 import { UpdateRecurringDto } from './dto/update-recurring.dto';
 import { QueryRecurringDto } from './dto/query-recurring.dto';
+import { JwtAuthGuard } from '@auth/guards/jwt-auth.guard';
+import { CurrentUser } from '@auth/decorators/current-user.decorator';
 
 @ApiTags('recurring')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('recurring')
 export class RecurringController {
     constructor(private readonly recurringService: RecurringService) {}
 
     @Post()
     @ApiOperation({ summary: 'Create recurring template' })
-    create(@Body() dto: CreateRecurringDto) {
-        return this.recurringService.create(dto);
+    create(@CurrentUser() user: { id: number }, @Body() dto: CreateRecurringDto) {
+        return this.recurringService.create(user.id, dto);
     }
 
     @Post('generate')
     @ApiOperation({ summary: 'Generate transactions from active recurring templates' })
-    generate() {
-        return this.recurringService.generate();
+    generate(@CurrentUser() user: { id: number }) {
+        return this.recurringService.generate(user.id);
     }
 
     @Get()
     @ApiOperation({ summary: 'List recurring templates' })
-    findAll(@Query() query: QueryRecurringDto) {
-        return this.recurringService.findAll(query);
+    findAll(@CurrentUser() user: { id: number }, @Query() query: QueryRecurringDto) {
+        return this.recurringService.findAll(user.id, query);
     }
 
     @Get(':id')
     @ApiOperation({ summary: 'Get recurring template by id' })
-    findOne(@Param('id', ParseIntPipe) id: number) {
-        return this.recurringService.findOne(id);
+    findOne(@CurrentUser() user: { id: number }, @Param('id', ParseIntPipe) id: number) {
+        return this.recurringService.findOne(user.id, id);
     }
 
     @Patch(':id')
     @ApiOperation({ summary: 'Update recurring template' })
-    update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateRecurringDto) {
-        return this.recurringService.update(id, dto);
+    update(
+        @CurrentUser() user: { id: number },
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: UpdateRecurringDto,
+    ) {
+        return this.recurringService.update(user.id, id, dto);
     }
 
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT)
     @ApiOperation({ summary: 'Delete recurring template' })
-    remove(@Param('id', ParseIntPipe) id: number) {
-        return this.recurringService.remove(id);
+    remove(@CurrentUser() user: { id: number }, @Param('id', ParseIntPipe) id: number) {
+        return this.recurringService.remove(user.id, id);
     }
-
 }

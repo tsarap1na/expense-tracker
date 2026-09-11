@@ -11,15 +11,15 @@ export class RecurringRepository {
         @InjectModel(Recurring) private readonly recurringModel: typeof Recurring,
     ) {}
 
-    async create(data: Partial<Recurring>): Promise<Recurring> {
-        return this.recurringModel.create(data);
+    async create(userId: number, data: Partial<Recurring>): Promise<Recurring> {
+        return this.recurringModel.create({ ...data, userId });
     }
 
-    async findAll(query: QueryRecurringDto) {
+    async findAll(userId: number, query: QueryRecurringDto) {
         const { page = 1, limit = 20, isActive } = query;
         const offset = (page - 1) * limit;
 
-        const where: WhereOptions<Recurring> = {};
+        const where: WhereOptions<Recurring> = { userId };
         if (isActive !== undefined) where.isActive = isActive;
 
         const { rows: data, count: total } = await this.recurringModel.findAndCountAll({
@@ -33,15 +33,17 @@ export class RecurringRepository {
         return { data, total, page, limit };
     }
 
-    async findById(id: number): Promise<Recurring | null> {
-        return this.recurringModel.findByPk(id, {
+    async findById(userId: number, id: number): Promise<Recurring | null> {
+        return this.recurringModel.findOne({
+            where: { id, userId },
             include: [{ model: Category, attributes: ['id', 'name', 'color'] }],
         });
     }
 
-    async findActiveDue(now: Date): Promise<Recurring[]> {
+    async findActiveDue(userId: number, now: Date): Promise<Recurring[]> {
         return this.recurringModel.findAll({
             where: {
+                userId,
                 isActive: true,
                 nextRunAt: { [Op.lte]: now },
             },

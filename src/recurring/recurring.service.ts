@@ -18,48 +18,48 @@ export class RecurringService {
         @InjectConnection() private readonly sequelize: Sequelize,
     ) {}
 
-    async create(dto: CreateRecurringDto): Promise<Recurring> {
-        const category = await this.categoryModel.findByPk(dto.categoryId);
+    async create(userId: number, dto: CreateRecurringDto): Promise<Recurring> {
+        const category = await this.categoryModel.findOne({ where: { id: dto.categoryId, userId } });
         if (!category) throw new BadRequestException(`Category #${dto.categoryId} not found`);
-        return this.recurringRepository.create({
+        return this.recurringRepository.create(userId, {
             ...dto,
             nextRunAt: new Date(dto.nextRunAt),
         });
     }
 
-    async findAll(query: QueryRecurringDto) {
-        return this.recurringRepository.findAll(query);
+    async findAll(userId: number, query: QueryRecurringDto) {
+        return this.recurringRepository.findAll(userId, query);
     }
 
-    async findOne(id: number): Promise<Recurring> {
-        const recurring = await this.recurringRepository.findById(id);
+    async findOne(userId: number, id: number): Promise<Recurring> {
+        const recurring = await this.recurringRepository.findById(userId, id);
         if (!recurring) throw new NotFoundException(`Recurring #${id} not found`);
         return recurring;
     }
 
-    async update(id: number, dto: UpdateRecurringDto): Promise<Recurring> {
-    const recurring = await this.findOne(id);
-    if (dto.categoryId) {
-        const category = await this.categoryModel.findByPk(dto.categoryId);
-        if (!category) throw new BadRequestException(`Category #${dto.categoryId} not found`);
+    async update(userId: number, id: number, dto: UpdateRecurringDto): Promise<Recurring> {
+        const recurring = await this.findOne(userId, id);
+        if (dto.categoryId) {
+            const category = await this.categoryModel.findOne({ where: { id: dto.categoryId, userId } });
+            if (!category) throw new BadRequestException(`Category #${dto.categoryId} not found`);
+        }
+
+        const data: Partial<Recurring> = {
+            ...dto,
+            ...(dto.nextRunAt && { nextRunAt: new Date(dto.nextRunAt) }),
+        } as Partial<Recurring>;
+
+        return this.recurringRepository.update(recurring, data);
     }
 
-    const data: Partial<Recurring> = {
-        ...dto,
-        ...(dto.nextRunAt && { nextRunAt: new Date(dto.nextRunAt) }),
-    } as Partial<Recurring>;
-
-    return this.recurringRepository.update(recurring, data);
-    }
-
-    async remove(id: number): Promise<void> {
-        const recurring = await this.findOne(id);
+    async remove(userId: number, id: number): Promise<void> {
+        const recurring = await this.findOne(userId, id);
         await this.recurringRepository.delete(recurring);
     }
 
-    async generate(): Promise<{ count: number; transactions: Transaction[] }> {
+    async generate(userId: number): Promise<{ count: number; transactions: Transaction[] }> {
         const now = new Date();
-        const templates = await this.recurringRepository.findActiveDue(now);
+        const templates = await this.recurringRepository.findActiveDue(userId, now);
         const created: Transaction[] = [];
 
         for (const template of templates) {
@@ -67,6 +67,7 @@ export class RecurringService {
                 const tx = await this.transactionModel.create(
                     {
                         categoryId: template.categoryId,
+                        userId: template.userId,
                         amount: template.amount,
                         type: template.type,
                         description: template.description,
@@ -78,16 +79,16 @@ export class RecurringService {
 
                 await this.recurringRepository.update(template, {
                     nextRunAt: this.calcNextRunAt(template.nextRunAt, template.frequency),
-                }, t );
+                }, t);
 
                 return tx;
-        });
+            });
 
-        created.push(transaction);
+            created.push(transaction);
+        }
+
+        return { count: created.length, transactions: created };
     }
-
-    return { count: created.length, transactions: created };
-}
 
     private calcNextRunAt(current: Date, frequency: Frequency): Date {
         const next = new Date(current);
