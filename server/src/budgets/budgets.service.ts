@@ -1,13 +1,18 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Inject } from '@nestjs/common';
+import type { Cache } from 'cache-manager';
 import { Budget } from './models/budget.model';
 import { CreateBudgetDto } from './dto/create-budget.dto';
 import { UpdateBudgetDto } from './dto/update-budget.dto';
 import { BudgetRepository } from './budget.repository';
 import { toMonthStart, getMonthRange, parseMonthParam } from './utils/month.util';
+import { CACHE_MANAGER, CACHE_TTL_MS, budgetSummaryCacheKey } from '@common/cache.constants';
 
 @Injectable()
 export class BudgetsService {
-    constructor(private readonly budgetRepository: BudgetRepository) {}
+    constructor(
+        private readonly budgetRepository: BudgetRepository,
+        @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    ) {}
 
     async create(userId: number, dto: CreateBudgetDto): Promise<Budget> {
         const month = parseMonthParam(dto.month);
@@ -17,11 +22,13 @@ export class BudgetsService {
                 `Budget for category #${dto.categoryId} on ${dto.month} already exists`,
             );
         }
-        return this.budgetRepository.create(userId, {
+        const budget = await this.budgetRepository.create(userId, {
             categoryId: dto.categoryId,
             month,
             limitAmount: dto.limitAmount,
         });
+        await this.invalidateSummaryCache(userId, month);
+        return budget;
     }
 
     async findAll(userId: number, month?: string): Promise<Budget[]> {
@@ -37,6 +44,7 @@ export class BudgetsService {
 
     async update(userId: number, id: number, dto: UpdateBudgetDto): Promise<Budget> {
         const budget = await this.findOne(userId, id);
+        const previousMonth = budget.month;
 
         const patch: Partial<Budget> = { ...dto } as Partial<Budget>;
         if (dto.month) {
@@ -51,12 +59,18 @@ export class BudgetsService {
             patch.month = month;
         }
 
-        return this.budgetRepository.update(budget, patch);
+        const updated = await this.budgetRepository.update(budget, patch);
+        await this.invalidateSummaryCache(userId, previousMonth);
+        if (patch.month && patch.month !== previousMonth) {
+            await this.invalidateSummaryCache(userId, patch.month);
+        }
+        return updated;
     }
 
     async remove(userId: number, id: number): Promise<void> {
         const budget = await this.findOne(userId, id);
         await this.budgetRepository.delete(budget);
+        await this.invalidateSummaryCache(userId, budget.month);
     }
 
     async checkLimit(
@@ -77,9 +91,16 @@ export class BudgetsService {
 
     async getSummary(userId: number, month: string) {
         const monthStart = parseMonthParam(month);
+        const cacheKey = budgetSummaryCacheKey(userId, monthStart);
+        const cached = await this.cache.get(cacheKey);
+        if (cached) return cached;
+
         const budgets = await this.budgetRepository.findAll(userId, monthStart);
 
-        if (budgets.length === 0) return [];
+        if (budgets.length === 0) {
+            await this.cache.set(cacheKey, [], CACHE_TTL_MS);
+            return [];
+        }
 
         const { start, end } = getMonthRange(monthStart);
         const categoryIds = budgets.map((b) => b.categoryId);
@@ -87,7 +108,7 @@ export class BudgetsService {
             userId, categoryIds, start, end,
         );
 
-        return budgets.map((budget) => {
+        const result = budgets.map((budget) => {
             const limitAmount = Number(budget.limitAmount);
             const spent = spentByCategory.get(budget.categoryId) ?? 0;
             const remaining = limitAmount - spent;
@@ -102,5 +123,12 @@ export class BudgetsService {
                 usedPercentage,
             };
         });
+
+        await this.cache.set(cacheKey, result, CACHE_TTL_MS);
+        return result;
+    }
+
+    async invalidateSummaryCache(userId: number, month: string): Promise<void> {
+        await this.cache.del(budgetSummaryCacheKey(userId, month));
     }
 }

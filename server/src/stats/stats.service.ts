@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import type { Cache } from 'cache-manager';
 import { Op, WhereOptions } from 'sequelize';
 import { StatsRepository } from './stats.repository';
 import { CategoryReportQueryDto } from './dto/category-report-query.dto';
@@ -8,13 +9,21 @@ import { getMonthRange } from '@budgets/utils/month.util';
 import { validateDateRange } from '@common/validate-date-range.util';
 import { TransactionType } from '@common/enums';
 import { Transaction } from '@transactions/models/transaction.model';
+import { CACHE_TTL_MS, CACHE_MANAGER } from '@common/cache.constants';
 
 @Injectable()
 export class StatsService {
-    constructor(private readonly statsRepository: StatsRepository) {}
+    constructor(
+        private readonly statsRepository: StatsRepository,
+        @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    ) {}
 
     async getCategoryReport(userId: number, query: CategoryReportQueryDto) {
         validateDateRange(query.dateFrom, query.dateTo);
+
+        const cacheKey = `stats:by-category:${userId}:${JSON.stringify(query)}`;
+        const cached = await this.cache.get(cacheKey);
+        if (cached) return cached;
 
         const where: WhereOptions<Transaction> = {};
         if (query.dateFrom || query.dateTo) {
@@ -32,18 +41,23 @@ export class StatsService {
         }
 
         const rows = await this.statsRepository.getCategoryTotals(userId, where);
-
-        return rows.map((r: any) => ({
+        const result = rows.map((r: any) => ({
             categoryId: r.categoryId,
             categoryName: r.category.name,
             type: r.type,
             total: Number(r.total),
         }));
+
+        await this.cache.set(cacheKey, result, CACHE_TTL_MS);
+        return result;
     }
 
     async getMonthlyDynamics(userId: number, monthsCount = 6) {
-        const months = getLastNMonths(monthsCount);
+        const cacheKey = `stats:monthly:${userId}:${monthsCount}`;
+        const cached = await this.cache.get(cacheKey);
+        if (cached) return cached;
 
+        const months = getLastNMonths(monthsCount);
         const rangeStart = getMonthRange(`${months[0]}-01`).start;
         const rangeEnd = getMonthRange(`${months[months.length - 1]}-01`).end;
 
@@ -56,14 +70,21 @@ export class StatsService {
             dataByMonth.set(row.month, entry);
         }
 
-        return months.map((month) => {
+        const result = months.map((month) => {
             const entry = dataByMonth.get(month) ?? { income: 0, expense: 0 };
             return { month, income: entry.income, expense: entry.expense };
         });
+
+        await this.cache.set(cacheKey, result, CACHE_TTL_MS);
+        return result;
     }
 
     async getTopCategories(userId: number, query: PeriodQueryDto, limit = 5) {
         validateDateRange(query.dateFrom, query.dateTo);
+
+        const cacheKey = `stats:top-categories:${userId}:${JSON.stringify(query)}:${limit}`;
+        const cached = await this.cache.get(cacheKey);
+        if (cached) return cached;
 
         const where: WhereOptions<Transaction> = { type: TransactionType.expense };
         if (query.dateFrom || query.dateTo) {
@@ -78,11 +99,13 @@ export class StatsService {
         }
 
         const rows = await this.statsRepository.getTopCategories(userId, where, limit);
-
-        return rows.map((r: any) => ({
+        const result = rows.map((r: any) => ({
             categoryId: r.categoryId,
             categoryName: r.category.name,
             total: Number(r.total),
         }));
+
+        await this.cache.set(cacheKey, result, CACHE_TTL_MS);
+        return result;
     }
 }

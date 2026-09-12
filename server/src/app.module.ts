@@ -17,6 +17,7 @@ import { ImportExportModule } from '@import-export/import-export.module';
 import { UsersModule } from '@users/users.module';
 import { AuthModule } from '@auth/auth.module';
 import { User } from '@users/models/user.model';
+import { AppCacheModule } from './common/cache.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { User } from '@users/models/user.model';
     StatsModule,
     UsersModule,
     AuthModule,
+    AppCacheModule
   ],
 })
 export class AppModule {}

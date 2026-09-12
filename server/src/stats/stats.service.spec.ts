@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { CACHE_MANAGER } from '@common/cache.constants';
 import { StatsService } from './stats.service';
 import { StatsRepository } from './stats.repository';
 
@@ -15,10 +16,13 @@ describe('StatsService', () => {
             getTopCategories: jest.fn(),
         };
 
+        const mockCache = { get: jest.fn().mockResolvedValue(undefined), set: jest.fn(), del: jest.fn() };
+
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 StatsService,
                 { provide: StatsRepository, useValue: mockStatsRepository },
+                { provide: CACHE_MANAGER, useValue: mockCache },
             ],
         }).compile();
 

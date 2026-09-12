@@ -26,7 +26,7 @@ describe('TransactionsService', () => {
             setTags: jest.fn(),
             findAll: jest.fn(),
         };
-        const mockBudgetsService = { checkLimit: jest.fn() };
+        const mockBudgetsService = { checkLimit: jest.fn(), invalidateSummaryCache: jest.fn() };
         const mockCategoryModel = { findOne: jest.fn() };
         const mockTagModel = { findAll: jest.fn() };
 
@@ -82,6 +82,7 @@ describe('TransactionsService', () => {
 
             expect(result.budgetWarning).toBeDefined();
             expect(result.budgetWarning?.spent).toBe(11000);
+            expect(budgetsService.invalidateSummaryCache).toHaveBeenCalledWith(userId, '2026-09-01');
         });
 
         it('does NOT add a budgetWarning for income transactions', async () => {
@@ -96,6 +97,7 @@ describe('TransactionsService', () => {
 
             expect(result.budgetWarning).toBeUndefined();
             expect(budgetsService.checkLimit).not.toHaveBeenCalled();
+            expect(budgetsService.invalidateSummaryCache).toHaveBeenCalledWith(userId, '2026-09-01');
         });
     });
 });

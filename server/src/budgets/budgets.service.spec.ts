@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { CACHE_MANAGER } from '@common/cache.constants';
 import { BudgetsService } from './budgets.service';
 import { BudgetRepository } from './budget.repository';
 
 describe('BudgetsService', () => {
     let service: BudgetsService;
     let budgetRepository: jest.Mocked<BudgetRepository>;
+    let cache: { get: jest.Mock; set: jest.Mock; del: jest.Mock };
 
     const userId = 1;
 
@@ -17,15 +19,19 @@ describe('BudgetsService', () => {
             create: jest.fn(),
         };
 
+        const mockCache = { get: jest.fn().mockResolvedValue(undefined), set: jest.fn(), del: jest.fn() };
+
         const module: TestingModule = await Test.createTestingModule({
             providers: [
                 BudgetsService,
                 { provide: BudgetRepository, useValue: mockBudgetRepository },
+                { provide: CACHE_MANAGER, useValue: mockCache },
             ],
         }).compile();
 
         service = module.get<BudgetsService>(BudgetsService);
         budgetRepository = module.get(BudgetRepository);
+        cache = module.get(CACHE_MANAGER);
     });
 
     afterEach(() => jest.clearAllMocks());
@@ -87,6 +93,21 @@ describe('BudgetsService', () => {
             const result = await service.getSummary(userId, '2026-09');
 
             expect(result[0].usedPercentage).toBe(33);
+            expect(cache.set).toHaveBeenCalledWith(
+                'budgets:summary:1:2026-09-01',
+                expect.any(Array),
+                15_000,
+            );
+        });
+
+        it('returns cached summary without querying the repository', async () => {
+            const cached = [{ categoryId: 1, usedPercentage: 50 }];
+            cache.get.mockResolvedValue(cached);
+
+            const result = await service.getSummary(userId, '2026-09');
+
+            expect(result).toEqual(cached);
+            expect(budgetRepository.findAll).not.toHaveBeenCalled();
         });
     });
 
