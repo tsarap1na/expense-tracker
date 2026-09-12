@@ -4,6 +4,21 @@ Personal finance app: track income and expenses, set category budgets, automate 
 
 The stack is a **NestJS** API (`server/`) and a **React + Vite** client (`client/`). Data lives in **PostgreSQL**. **Redis** is used for response caching and for a **BullMQ** queue that generates due recurring transactions.
 
+## Deployment
+
+Live demo:
+- **Frontend**: https://expense-tracker-kate18.vercel.app
+- **Backend / Swagger**: https://expense-tracker-fbo4.onrender.com/api
+
+Hosted on the free tiers of three separate providers
+
+| Layer      | Provider | Notes |
+|------------|----------|-------|
+| Frontend   | [Vercel](https://vercel.com) | Auto-deploys from `client/` on push |
+| Backend    | [Render](https://render.com) | Docker web service, auto-deploys from `server/` on push |
+| PostgreSQL | [Neon](https://neon.tech) | Serverless Postgres, connection via `PGHOST`/`PGUSER`/`PGPASSWORD` env vars with SSL |
+| Redis      | Render Key Value | Free instance, same region as the backend for internal networking |
+
 ## Features
 
 - JWT auth (register, login, refresh)
