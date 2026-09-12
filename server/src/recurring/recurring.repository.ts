@@ -50,6 +50,15 @@ export class RecurringRepository {
         });
     }
 
+    async findAllActiveDue(now: Date): Promise<Recurring[]> {
+        return this.recurringModel.findAll({
+            where: {
+                isActive: true,
+                nextRunAt: { [Op.lte]: now },
+            },
+        });
+    }
+
     async update(recurring: Recurring, data: Partial<Recurring>, transaction?: SequelizeTransaction): Promise<Recurring> {
         return recurring.update(data, { transaction });
     }

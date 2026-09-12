@@ -6,6 +6,7 @@ import { CategoriesModule } from '@categories/categories.module'
 import { TransactionsModule } from '@transactions/transactions.module'
 import { SummaryModule } from '@summary/summary.module'
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { BullModule } from '@nestjs/bullmq';
 import { RecurringModule } from '@recurring/recurring.module';
 import { Recurring } from '@recurring/models/recurring.model';
 import { TagsModule } from '@tags/tags.module';
@@ -22,6 +23,15 @@ import { AppCacheModule } from './common/cache.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.get('REDIS_HOST', 'localhost'),
+          port: Number(config.get('REDIS_PORT', 6379)),
+        },
+      }),
+    }),
     SequelizeModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

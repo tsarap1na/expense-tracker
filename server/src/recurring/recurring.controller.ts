@@ -24,7 +24,7 @@ export class RecurringController {
     }
 
     @Post('generate')
-    @ApiOperation({ summary: 'Generate transactions from active recurring templates' })
+    @ApiOperation({ summary: 'Manually generate due transactions for the current user (also runs automatically via BullMQ every minute)' })
     generate(@CurrentUser() user: { id: number }) {
         return this.recurringService.generate(user.id);
     }

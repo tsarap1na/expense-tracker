@@ -8,11 +8,15 @@ import { CreateRecurringDto } from './dto/create-recurring.dto';
 import { UpdateRecurringDto } from './dto/update-recurring.dto';
 import { QueryRecurringDto } from './dto/query-recurring.dto';
 import { Recurring, Frequency } from './models/recurring.model';
+import { BudgetsService } from '@budgets/budgets.service';
+import { toMonthStart } from '@budgets/utils/month.util';
+import { TransactionType } from '@common/enums';
 
 @Injectable()
 export class RecurringService {
     constructor(
         private readonly recurringRepository: RecurringRepository,
+        private readonly budgetsService: BudgetsService,
         @InjectModel(Category) private readonly categoryModel: typeof Category,
         @InjectModel(Transaction) private readonly transactionModel: typeof Transaction,
         @InjectConnection() private readonly sequelize: Sequelize,
@@ -58,11 +62,22 @@ export class RecurringService {
     }
 
     async generate(userId: number): Promise<{ count: number; transactions: Transaction[] }> {
-        const now = new Date();
-        const templates = await this.recurringRepository.findActiveDue(userId, now);
+        const templates = await this.recurringRepository.findActiveDue(userId, new Date());
+        const transactions = await this.generateFromTemplates(templates);
+        return { count: transactions.length, transactions };
+    }
+
+    async generateDue(): Promise<{ count: number }> {
+        const templates = await this.recurringRepository.findAllActiveDue(new Date());
+        const transactions = await this.generateFromTemplates(templates);
+        return { count: transactions.length };
+    }
+
+    private async generateFromTemplates(templates: Recurring[]): Promise<Transaction[]> {
         const created: Transaction[] = [];
 
         for (const template of templates) {
+            const runAt = template.nextRunAt;
             const transaction = await this.sequelize.transaction(async (t) => {
                 const tx = await this.transactionModel.create(
                     {
@@ -71,23 +86,27 @@ export class RecurringService {
                         amount: template.amount,
                         type: template.type,
                         description: template.description,
-                        date: template.nextRunAt,
+                        date: runAt,
                         recurringId: template.id,
                     },
                     { transaction: t },
                 );
 
                 await this.recurringRepository.update(template, {
-                    nextRunAt: this.calcNextRunAt(template.nextRunAt, template.frequency),
+                    nextRunAt: this.calcNextRunAt(runAt, template.frequency),
                 }, t);
 
                 return tx;
             });
 
             created.push(transaction);
+
+            if (template.type === TransactionType.expense) {
+                await this.budgetsService.invalidateSummaryCache(template.userId, toMonthStart(runAt));
+            }
         }
 
-        return { count: created.length, transactions: created };
+        return created;
     }
 
     private calcNextRunAt(current: Date, frequency: Frequency): Date {

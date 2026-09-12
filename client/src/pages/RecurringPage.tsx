@@ -40,7 +40,13 @@ export function RecurringPage() {
 
     const generateMutation = useMutation({
         mutationFn: () => apiClient.post('/recurring/generate'),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            queryClient.invalidateQueries({ queryKey: ['recurring'] });
+            queryClient.invalidateQueries({ queryKey: ['summary'] });
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
+            queryClient.invalidateQueries({ queryKey: ['budgets-summary'] });
+        },
     });
 
     return (
