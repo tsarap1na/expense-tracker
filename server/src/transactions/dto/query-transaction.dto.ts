@@ -31,11 +31,13 @@ export class QueryTransactionDto {
 
   @ApiPropertyOptional({ enum: TransactionType })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsEnum(TransactionType)
   type?: TransactionType;
 
   @ApiPropertyOptional()
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @Type(() => Number)
   @IsInt()
   categoryId?: number;
