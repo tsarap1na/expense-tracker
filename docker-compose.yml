@@ -1,12 +1,52 @@
-version: '3.8'
-
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: expense_tracker_db
-    environment:
-      POSTGRES_DB: ${PGDATABASE}
-      POSTGRES_USER: ${PGUSER}
-      POSTGRES_PASSWORD: ${PGPASSWORD}
-    ports:
-      - '${PGPORT}:5432'
+    db:
+        image: postgres:16-alpine
+        container_name: expense_tracker_db
+        environment:
+            POSTGRES_DB: ${PGDATABASE}
+            POSTGRES_USER: ${PGUSER}
+            POSTGRES_PASSWORD: ${PGPASSWORD}
+        ports:
+            - '${PGPORT}:5432'
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U ${PGUSER}']
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    redis:
+        image: redis:7-alpine
+        container_name: expense_tracker_redis
+        ports:
+            - '6379:6379'
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    api:
+        build:
+            context: ./server
+        container_name: expense_tracker_api
+        depends_on:
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        environment:
+            PORT: 3000
+            PGHOST: db
+            PGPORT: 5432
+            PGDATABASE: ${PGDATABASE}
+            PGUSER: ${PGUSER}
+            PGPASSWORD: ${PGPASSWORD}
+            REDIS_HOST: redis
+            REDIS_PORT: 6379
+        ports:
+            - '3000:3000'
+
+volumes:
+    postgres_data:

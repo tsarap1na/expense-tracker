@@ -1,98 +1,253 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Expense Tracker
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Personal finance app: track income and expenses, set category budgets, automate recurring payments, and review stats on a dashboard.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ npm install
-```
-
-## Compile and run the project
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
+The stack is a **NestJS** API (`server/`) and a **React + Vite** client (`client/`). Data lives in **PostgreSQL**. **Redis** is used for response caching and for a **BullMQ** queue that generates due recurring transactions.
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Live demo:
+- **Frontend**: https://expense-tracker-kate18.vercel.app
+- **Backend / Swagger**: https://expense-tracker-fbo4.onrender.com/api
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Hosted on the free tiers of three separate providers
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+| Layer      | Provider | Notes |
+|------------|----------|-------|
+| Frontend   | [Vercel](https://vercel.com) | Auto-deploys from `client/` on push |
+| Backend    | [Render](https://render.com) | Docker web service, auto-deploys from `server/` on push |
+| PostgreSQL | [Neon](https://neon.tech) | Serverless Postgres, connection via `PGHOST`/`PGUSER`/`PGPASSWORD` env vars with SSL |
+| Redis      | Render Key Value | Free instance, same region as the backend for internal networking |
+
+## Features
+
+- JWT auth (register, login, refresh)
+- Categories, transactions, and tags
+- Monthly budgets with spent / remaining / usage %
+- Recurring templates (daily / weekly / monthly)
+  - Automatic generation every minute via BullMQ
+  - Manual **Generate now** on the Recurring page (`POST /recurring/generate`)
+- Dashboard: period summary, monthly dynamics, top expense categories
+- CSV / JSON import and export
+- Redis cache (15s TTL) for heavy aggregations:
+  - `GET /stats/*`
+  - `GET /budgets/summary`
+  - `GET /summary`
+
+## Architecture
+
+```
+client (Vite, :5173)
+        │
+        ▼
+API (NestJS, :3000) ── PostgreSQL (:5433 host / :5432 in Docker)
+        │
+        └── Redis (:6379)
+              ├── cache (stats, budget summary, period summary)
+              └── BullMQ queue `recurring` (keys `bull:recurring:*`)
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Swagger UI: [http://localhost:3000/api](http://localhost:3000/api)
 
-## Resources
+## Prerequisites
 
-Check out a few resources that may come in handy when working with NestJS:
+- Node.js 20+ (API Docker image uses Node 22)
+- Docker Desktop (Postgres, Redis, and optionally the API)
+- npm
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## Quick start with Docker
 
-## Support
+From the **repository root** (`D:\expense-tracker` / project root), create a `.env` file. Docker Compose reads this file (not `server/.env`):
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```env
+PGHOST=localhost
+PGPORT=5433
+PGUSER=user
+PGPASSWORD=password
+PGDATABASE=expense_tracker
+```
 
-## Stay in touch
+Start everything:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+docker compose up --build -d
+```
 
-## License
+| Service    | Container                 | Host port |
+|------------|---------------------------|-----------|
+| API        | `expense_tracker_api`     | 3000      |
+| PostgreSQL | `expense_tracker_db`      | 5433 → 5432 |
+| Redis      | `expense_tracker_redis`   | 6379      |
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+After code changes, rebuild the API image (Compose will otherwise keep an old cached image):
+
+```bash
+docker compose up --build -d
+```
+
+Postgres credentials in `.env` must match the ones used when the volume was first created. Changing `PGUSER` / `PGPASSWORD` later without recreating the volume causes `password authentication failed`.
+
+## Local development
+
+### 1. Infrastructure
+
+You can run only Postgres and Redis in Docker and the API on the host:
+
+```bash
+docker compose up -d db redis
+```
+
+### 2. API
+
+```bash
+cd server
+cp .env.example .env
+npm ci
+npm run start:dev
+```
+
+`server/.env` (typical local values):
+
+```env
+PGHOST=localhost
+PGPORT=5433
+PGUSER=user
+PGPASSWORD=password
+PGDATABASE=expense_tracker
+PORT=3000
+JWT_SECRET=your-access-secret-change-in-production
+JWT_REFRESH_SECRET=your-refresh-secret-change-in-production
+REDIS_HOST=localhost
+REDIS_PORT=6379
+```
+
+Inside Compose, the API uses `REDIS_HOST=redis` and `PGHOST=db` automatically.
+
+### 3. Client
+
+```bash
+cd client
+npm ci
+npm run dev
+```
+
+The Vite app uses `VITE_API_URL=http://localhost:3000` (see `client/.env.development`). Open [http://localhost:5173](http://localhost:5173).
+
+Register a user on `/login`, then use Dashboard, Categories, Transactions, Budgets, Recurring, and Import / Export.
+
+## Redis
+
+### Cache
+
+After an authenticated call such as `GET /stats/monthly?months=6`:
+
+```bash
+docker exec -it expense_tracker_redis redis-cli KEYS "stats:*"
+docker exec -it expense_tracker_redis redis-cli KEYS "budgets:summary:*"
+```
+
+TTL is **15 seconds**. Empty `KEYS *` right after a request usually means the API process is an old Docker image without the Redis cache, or the key already expired.
+
+### Recurring queue (BullMQ)
+
+On API startup the worker registers a repeatable job `generate-due` (every 60 seconds). Expected keys:
+
+```bash
+docker exec -it expense_tracker_redis redis-cli KEYS "bull:recurring:*"
+```
+
+Example:
+
+```
+bull:recurring:repeat
+bull:recurring:repeat:generate-due
+bull:recurring:delayed
+bull:recurring:meta
+```
+
+These keys are **queue metadata**, not transactions. Created payments are rows in PostgreSQL (`transactions.recurringId`).
+
+To test automation: create an active recurring template with `nextRunAt` in the past, wait up to one minute (or click **Generate now**). Check API logs for `Generated N recurring transaction(s)`.
+
+BullMQ 6 requires the `ioredis` package (already listed in `server/package.json`).
+
+## API overview
+
+All business endpoints except auth require `Authorization: Bearer <accessToken>`.
+
+| Area        | Base path        | Notes |
+|-------------|------------------|--------|
+| Auth        | `/auth`          | `POST /register`, `/login`, `/refresh` |
+| Categories  | `/categories`    | CRUD |
+| Transactions| `/transactions`  | CRUD, import, export |
+| Budgets     | `/budgets`       | CRUD + `GET /budgets/summary?month=YYYY-MM` |
+| Recurring   | `/recurring`     | CRUD + `POST /recurring/generate` |
+| Summary     | `/summary`       | Income / expense / balance |
+| Stats       | `/stats`         | By category, monthly, top categories |
+| Tags        | `/tags`          | CRUD + stats |
+
+`POST /recurring/generate` still returns `{ count, transactions }` for the **current user** so the web client keeps working. The worker runs the same generation for **all users**.
+
+## Tests
+
+From `server/`:
+
+```bash
+npm test
+npm run test:e2e
+```
+
+## Scripts
+
+**API (`server/`)**
+
+| Script            | Description        |
+|-------------------|--------------------|
+| `npm run start:dev` | Watch mode       |
+| `npm run build`   | Compile            |
+| `npm run start:prod` | `node dist/main.js` |
+| `npm test`        | Jest unit tests    |
+| `npm run lint`    | ESLint             |
+
+**Client (`client/`)**
+
+| Script         | Description   |
+|----------------|---------------|
+| `npm run dev`  | Vite dev server |
+| `npm run build`| Production build |
+
+## Docker on Windows
+
+`npm ci` inside the Linux image must match `package-lock.json`. If Compose fails with a lockfile sync error, regenerate the lockfile in Linux, then reinstall on Windows:
+
+```powershell
+cd server
+docker run --rm -v ${PWD}:/app -w /app node:22-alpine sh -c "npm install"
+Remove-Item -Recurse -Force node_modules
+npm ci
+```
+
+Then rebuild: `docker compose up --build -d` from the repo root.
+
+## Project layout
+
+```
+expense-tracker/
+├── docker-compose.yml
+├── client/                 # React UI
+└── server/                 # NestJS API
+    ├── Dockerfile
+    ├── .env.example
+    └── src/
+        ├── auth/
+        ├── budgets/
+        ├── categories/
+        ├── common/         # Redis cache module
+        ├── import-export/
+        ├── recurring/      # CRUD + BullMQ processor/scheduler
+        ├── stats/
+        ├── summary/
+        ├── tags/
+        ├── transactions/
+        └── users/
+```

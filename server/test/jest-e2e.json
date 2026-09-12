@@ -1,0 +1,21 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": { "^.+\\.(t|j)s$": "ts-jest" },
+  "setupFiles": ["<rootDir>/setup-env.ts"],
+  "moduleNameMapper": {
+    "^@categories/(.*)$": "<rootDir>/../src/categories/$1",
+    "^@transactions/(.*)$": "<rootDir>/../src/transactions/$1",
+    "^@tags/(.*)$": "<rootDir>/../src/tags/$1",
+    "^@budgets/(.*)$": "<rootDir>/../src/budgets/$1",
+    "^@common/(.*)$": "<rootDir>/../src/common/$1",
+    "^@recurring/(.*)$": "<rootDir>/../src/recurring/$1",
+    "^@summary/(.*)$": "<rootDir>/../src/summary/$1",
+    "^@stats/(.*)$": "<rootDir>/../src/stats/$1",
+    "^@import-export/(.*)$": "<rootDir>/../src/import-export/$1",
+    "^@users/(.*)$": "<rootDir>/../src/users/$1",
+    "^@auth/(.*)$": "<rootDir>/../src/auth/$1"
+  }
+}
