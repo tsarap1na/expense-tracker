@@ -45,6 +45,11 @@ import { AppCacheModule } from './common/cache.module';
         autoLoadModels: true,
         sync: { alter: true },
         logging: false,
+        dialectOptions: {
+          ssl: config.get('NODE_ENV') === 'production'
+            ? { require: true, rejectUnauthorized: false }
+            : undefined,
+        },
         models: [Category, Transaction, Recurring, Tag, TransactionTag, User],
       }),
     }),
